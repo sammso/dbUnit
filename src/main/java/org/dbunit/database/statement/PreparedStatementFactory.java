@@ -77,7 +77,7 @@ public class PreparedStatementFactory extends AbstractStatementFactory
         {
             statement = new SimplePreparedStatement(sql, connection.getConnection());
         }
-        return new AutomaticPreparedBatchStatement(statement, batchSize.intValue());
+        return new AutomaticPreparedBatchStatement(connection, statement, batchSize.intValue());
     }
 }
 

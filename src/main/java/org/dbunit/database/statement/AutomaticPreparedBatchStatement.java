@@ -20,13 +20,13 @@
  */
 package org.dbunit.database.statement;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.sql.SQLException;
 
+import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.datatype.DataType;
 import org.dbunit.dataset.datatype.TypeCastException;
-
-import java.sql.SQLException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Manuel Laflamme
@@ -42,12 +42,14 @@ public class AutomaticPreparedBatchStatement implements IPreparedBatchStatement
     private static final Logger logger = LoggerFactory.getLogger(AutomaticPreparedBatchStatement.class);
 
     private final IPreparedBatchStatement _statement;
+    private final IDatabaseConnection _connection;
     private int _batchCount = 0;
     private int _threshold;
     private int _result = 0;
 
-    public AutomaticPreparedBatchStatement(IPreparedBatchStatement statement, int threshold)
+    public AutomaticPreparedBatchStatement(IDatabaseConnection connection, IPreparedBatchStatement statement, int threshold)
     {
+        _connection = connection;
         _statement = statement;
         _threshold = threshold;
     }
@@ -73,6 +75,18 @@ public class AutomaticPreparedBatchStatement implements IPreparedBatchStatement
         if (_batchCount % _threshold == 0)
         {
             _result += _statement.executeBatch();
+            if ( _connection.getConnection().getAutoCommit()==false) {
+                _connection.getConnection().commit();
+                if (logger.isDebugEnabled()) {
+                    logger.info("The batch completed - COMMIT ");
+                }
+            }
+            else {
+                if (logger.isDebugEnabled())
+                {
+                    logger.debug("The batch completed - AUTOCOMMIT ");
+                }
+            }
         }
     }
 
@@ -81,6 +95,18 @@ public class AutomaticPreparedBatchStatement implements IPreparedBatchStatement
         logger.debug("executeBatch() - start");
 
         _result += _statement.executeBatch();
+        if ( _connection.getConnection().getAutoCommit()==false) {
+            _connection.getConnection().commit();
+            if (logger.isDebugEnabled()) {
+                logger.info("The batch completed - COMMIT ");
+            }
+        }
+        else {
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("The batch completed - AUTOCOMMIT ");
+            }
+        }
         return _result;
     }
 
